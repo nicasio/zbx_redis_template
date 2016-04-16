@@ -41,6 +41,7 @@ def send_to_zabbix(metrics, zabbix_host='127.0.0.1', zabbix_port=10051):
     json_data = ('{"request":"sender data","data":[%s]}') % (','.join(metrics_data))
     data_len = struct.pack('<Q', len(json_data))
     packet = 'ZBXD\x01'+ data_len + json_data
+    print(packet)
 
     # For debug:
     # print(packet)
@@ -129,11 +130,10 @@ def main():
         for i in server_info:
             a.append(Metric(redis_hostname, ('redis[%s]' % i), server_info[i]))
 
-        llensum = 0
         for key in client.scan_iter('*'):
             if client.type(key) == 'list':
-                llensum += client.llen(key)
-        a.append(Metric(redis_hostname, 'redis[llenall]', llensum))
+                a.append(Metric(redis_hostname, 'redis[llen '+key+']', client.llen(key)))
+
 
         # Send packet to zabbix
         send_to_zabbix(a, zabbix_host, zabbix_port)
